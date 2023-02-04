@@ -2,7 +2,6 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -20,7 +19,7 @@ struct Stake {
     bool isClaimed;
 }
 
-contract NFTStaking is AccessControl {
+contract NFTStaking {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
     IERC721 public lampNft;
@@ -52,7 +51,6 @@ contract NFTStaking is AccessControl {
     constructor(address _lampNft, address _remnToken) {
         lampNft = IERC721(_lampNft);
         remnToken = IRemn(_remnToken);
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         stakePlans[0] = StakePlan(1 days, 10 * 10**18);
         stakePlans[1] = StakePlan(7 days, 100 * 10**18);
@@ -86,7 +84,7 @@ contract NFTStaking is AccessControl {
         require(_stake.isClaimed == false, "NFTStaking: Stake already claimed");
         require(
             block.timestamp >
-                _stake.startTime + stakePlans[_stake.planId].duration,
+                _stake.startTime.add(stakePlans[_stake.planId].duration),
             "NFTStaking: Stake not matured"
         );
         lampNft.transferFrom(address(this), msg.sender, _stake.nftId);
@@ -101,6 +99,14 @@ contract NFTStaking is AccessControl {
             block.timestamp,
             stakePlans[_stake.planId].reward
         );
+    }
+
+    function getStakesByStaker(address staker)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return stakesByStaker[staker];
     }
 }
 
