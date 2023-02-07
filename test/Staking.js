@@ -68,7 +68,7 @@ describe("Staking", function () {
     );
     await mintNftFixture(lamp, other);
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await expect(staking.connect(other).stake(0, 3)).to.be.revertedWith(
+    await expect(staking.connect(other).stake(0, 4)).to.be.revertedWith(
       "NFTStaking: Invalid plan"
     );
   });
@@ -78,7 +78,7 @@ describe("Staking", function () {
       deployStakingFixture
     );
     await mintNftFixture(lamp, other);
-    await expect(staking.connect(other).stake(0, 0)).to.be.revertedWith(
+    await expect(staking.connect(other).stake(0, 1)).to.be.revertedWith(
       "ERC721: caller is not token owner or approved"
     );
   });
@@ -91,7 +91,7 @@ describe("Staking", function () {
     await mintNftFixture(lamp, other);
     await mintNftFixture(lamp, owner);
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await expect(staking.connect(other).stake(4, 0)).to.be.revertedWith(
+    await expect(staking.connect(other).stake(4, 1)).to.be.revertedWith(
       "NFTStaking: Not owner of NFT"
     );
   });
@@ -102,16 +102,16 @@ describe("Staking", function () {
     );
     await mintNftFixture(lamp, other);
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await expect(staking.connect(other).stake(0, 0)).to.emit(
+    await expect(staking.connect(other).stake(0, 1)).to.emit(
       staking,
       "StakeCreated"
     );
     expect((await staking.stakes(0))[4]).to.equal(await time.latest());
-    await expect(staking.connect(other).stake(1, 1)).to.emit(
+    await expect(staking.connect(other).stake(1, 2)).to.emit(
       staking,
       "StakeCreated"
     );
-    await expect(staking.connect(other).stake(2, 2)).to.emit(
+    await expect(staking.connect(other).stake(2, 3)).to.emit(
       staking,
       "StakeCreated"
     );
@@ -119,6 +119,8 @@ describe("Staking", function () {
     expect(await lamp.ownerOf(0)).to.equal(staking.address);
     expect(await lamp.ownerOf(1)).to.equal(staking.address);
     expect(await lamp.ownerOf(2)).to.equal(staking.address);
+
+    console.log(await staking.getStakesByStaker(other.address));
   });
 });
 
@@ -129,7 +131,7 @@ describe("Unstaking", function () {
     );
     await mintNftFixture(lamp, other);
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await staking.connect(other).stake(0, 0);
+    await staking.connect(other).stake(0, 1);
     await expect(staking.connect(other).unstake(0)).to.be.revertedWith(
       "NFTStaking: Stake not matured"
     );
@@ -142,7 +144,7 @@ describe("Unstaking", function () {
     const [owner] = await ethers.getSigners();
     await mintNftFixture(lamp, other); // id: 0, 1, 2
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await staking.connect(other).stake(0, 0);
+    await staking.connect(other).stake(0, 1);
 
     await expect(staking.unstake(0)).to.be.revertedWith(
       "NFTStaking: Not owner of stake"
@@ -156,9 +158,9 @@ describe("Unstaking", function () {
 
     await mintNftFixture(lamp, other); // id: 0, 1, 2
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await staking.connect(other).stake(0, 0);
+    await staking.connect(other).stake(0, 1);
 
-    await time.increase(plan[0].duration); // 1 day
+    await time.increase(plan[1].duration); // 1 day
     await expect(staking.connect(other).unstake(0)).to.emit(
       staking,
       "StakeClaimed"
@@ -175,7 +177,7 @@ describe("Unstaking", function () {
 
     await mintNftFixture(lamp, other); // id: 0, 1, 2
     await lamp.connect(other).setApprovalForAll(staking.address, true);
-    await staking.connect(other).stake(0, 0);
+    await staking.connect(other).stake(0, 1);
 
     await time.increase(plan[0].duration); // 1 day
     await staking.connect(other).unstake(0);

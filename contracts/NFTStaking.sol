@@ -29,6 +29,7 @@ contract NFTStaking {
     mapping(uint256 => Stake) public stakes;
     mapping(address => uint256[]) public stakesByStaker;
     mapping(uint256 => StakePlan) public stakePlans;
+    // mapping(address => mapping(uint256=>bool)) public isStakedPlan;
 
     event StakeCreated(
         address indexed staker,
@@ -52,9 +53,16 @@ contract NFTStaking {
         lampNft = IERC721(_lampNft);
         remnToken = IRemn(_remnToken);
 
-        stakePlans[0] = StakePlan(1 days, 10 * 10**18);
-        stakePlans[1] = StakePlan(7 days, 100 * 10**18);
-        stakePlans[2] = StakePlan(30 days, 500 * 10**18);
+        stakePlans[1] = StakePlan(1 days, 10 * 10**18);
+        stakePlans[2] = StakePlan(7 days, 100 * 10**18);
+        stakePlans[3] = StakePlan(30 days, 500 * 10**18);
+    }
+
+    function multiStake(uint256[] memory nftIds, uint256 planId) public {
+        require(nftIds.length <= 10, "NFTStaking: Invalid nftIds length");
+        for (uint256 i = 0; i < nftIds.length; i++) {
+            stake(nftIds[i], planId);
+        }
     }
 
     function stake(uint256 nftId, uint256 planId) public {
@@ -62,7 +70,7 @@ contract NFTStaking {
             lampNft.ownerOf(nftId) == msg.sender,
             "NFTStaking: Not owner of NFT"
         );
-        require(planId < 3, "NFTStaking: Invalid plan");
+        require(planId < 4 && planId > 0, "NFTStaking: Invalid plan");
         lampNft.transferFrom(msg.sender, address(this), nftId);
         uint256 stakeId = _stakeIdCounter.current();
         _stakeIdCounter.increment();
@@ -104,9 +112,13 @@ contract NFTStaking {
     function getStakesByStaker(address staker)
         public
         view
-        returns (uint256[] memory)
+        returns (Stake[] memory)
     {
-        return stakesByStaker[staker];
+        Stake[] memory _stakes = new Stake[](stakesByStaker[staker].length);
+        for (uint256 i = 0; i < stakesByStaker[staker].length; i++) {
+            _stakes[i] = stakes[stakesByStaker[staker][i]];
+        }
+        return _stakes;
     }
 }
 
